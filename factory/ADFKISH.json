@@ -1,0 +1,9 @@
+{
+	"name": "ADFKISH",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "9fddb855-1186-49ab-b754-dcc01653e2e7",
+		"tenantId": "c0ffd555-774b-4538-9434-dd53de6bff33"
+	}
+}
