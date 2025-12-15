@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"folderpath": {
+			"table": {
 				"type": "string"
 			}
 		},
