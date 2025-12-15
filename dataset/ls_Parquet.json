@@ -15,10 +15,8 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"folderPath": {
-					"value": "@dataset().folderpath",
-					"type": "Expression"
-				},
+				"fileName": "@{dataset().table}",
+				"folderPath": "raw/retail/@{dataset().table}",
 				"fileSystem": "raw"
 			},
 			"compressionCodec": "snappy"
