@@ -6,17 +6,8 @@
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"tableName": {
-				"type": "string",
-				"defaultValue": "@dataset().tableName"
-			},
-			"page": {
-				"type": "int",
-				"defaultValue": "@dataset().page"
-			},
-			"page_size": {
-				"type": "int",
-				"defaultValue": "@dataset().page_size"
+			"Relative URL": {
+				"type": "string"
 			}
 		},
 		"annotations": [],
