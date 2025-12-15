@@ -17,7 +17,7 @@
 				"type": "AzureBlobFSLocation",
 				"fileName": "@{dataset().table}.json",
 				"folderPath": {
-					"value": "retail/@{dataset().table}raw/retail/@{dataset().table}",
+					"value": "retail/@{dataset().table}",
 					"type": "Expression"
 				},
 				"fileSystem": "raw"
