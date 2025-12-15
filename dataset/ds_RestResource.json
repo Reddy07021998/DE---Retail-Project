@@ -22,7 +22,10 @@
 		"annotations": [],
 		"type": "RestResource",
 		"typeProperties": {
-			"relativeUrl": "@dataset().tableName"
+			"relativeUrl": {
+				"value": "/customers",
+				"type": "Expression"
+			}
 		},
 		"schema": []
 	}
