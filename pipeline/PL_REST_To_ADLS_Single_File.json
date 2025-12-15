@@ -1,0 +1,76 @@
+{
+	"name": "PL_REST_To_ADLS_Single_File",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get_API_Metadata",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": "https://understandably-unstraying-kamron.ngrok-free.dev/"
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get_API_Metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get_API_Metadata').output.endpoints\n",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Execute Pipeline",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_Load_One_Table",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"endpoint": "{\n  \"endpoint\": \"@item()\"\n}"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"page": {
+				"type": "Integer",
+				"defaultValue": 1
+			},
+			"total_pages": {
+				"type": "Integer",
+				"defaultValue": 1
+			}
+		},
+		"annotations": []
+	}
+}
