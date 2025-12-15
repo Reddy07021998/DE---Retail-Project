@@ -20,7 +20,7 @@
 				}
 			},
 			{
-				"name": "ForEach1_copy",
+				"name": "ForEach",
 				"type": "ForEach",
 				"dependsOn": [
 					{
@@ -36,10 +36,13 @@
 						"value": "[\n  {\n    \"table\": \"customers\",\n    \"endpoint\": \"/customers\",\n    \"incremental\": false\n  }\n]",
 						"type": "Expression"
 					},
+					"isSequential": true,
 					"activities": [
 						{
 							"name": "If Condition",
 							"type": "IfCondition",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [],
 							"userProperties": [],
 							"typeProperties": {
@@ -99,10 +102,6 @@
 												"type": "DatasetReference",
 												"parameters": {
 													"folderpath": {
-														"value": "@concat(\n  'raw/',\n  item().table\n)\n",
-														"type": "Expression"
-													},
-													"filepath": {
 														"value": "@concat(\n  'raw/',\n  item().table,\n  '/ingest_date=',\n  formatDateTime(utcNow(),'yyyy-MM-dd')\n)\n",
 														"type": "Expression"
 													}
@@ -111,6 +110,15 @@
 										]
 									}
 								]
+							}
+						},
+						{
+							"name": "Wait1",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 1
 							}
 						}
 					]
