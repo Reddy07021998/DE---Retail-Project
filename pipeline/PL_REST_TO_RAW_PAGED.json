@@ -3,8 +3,8 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy_REST_To_RAW",
-				"type": "Copy",
+				"name": "Get total pages",
+				"type": "WebActivity",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -15,164 +15,245 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "RestSource",
-						"httpRequestTimeout": "00:01:40",
-						"requestInterval": "00.00:00:00.010",
-						"requestMethod": "GET"
-					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"mappings": [
-							{
-								"source": {
-									"path": "$['pagination']['page']"
-								},
-								"sink": {
-									"name": "page"
-								}
-							},
-							{
-								"source": {
-									"path": "$['pagination']['page_size']"
-								},
-								"sink": {
-									"name": "page_size"
-								}
-							},
-							{
-								"source": {
-									"path": "$['pagination']['total_pages']"
-								},
-								"sink": {
-									"name": "total_pages"
-								}
-							},
-							{
-								"source": {
-									"path": "$['pagination']['total_records']"
-								},
-								"sink": {
-									"name": "total_records"
-								}
-							},
-							{
-								"source": {
-									"path": "['customer_id']"
-								},
-								"sink": {
-									"name": "customer_id"
-								}
-							},
-							{
-								"source": {
-									"path": "['first_name']"
-								},
-								"sink": {
-									"name": "first_name"
-								}
-							},
-							{
-								"source": {
-									"path": "['last_name']"
-								},
-								"sink": {
-									"name": "last_name"
-								}
-							},
-							{
-								"source": {
-									"path": "['email']"
-								},
-								"sink": {
-									"name": "email"
-								}
-							},
-							{
-								"source": {
-									"path": "['phone']"
-								},
-								"sink": {
-									"name": "phone"
-								}
-							},
-							{
-								"source": {
-									"path": "['city']"
-								},
-								"sink": {
-									"name": "city"
-								}
-							},
-							{
-								"source": {
-									"path": "['state']"
-								},
-								"sink": {
-									"name": "state"
-								}
-							},
-							{
-								"source": {
-									"path": "['created_at']"
-								},
-								"sink": {
-									"name": "created_at"
-								}
-							}
-						],
-						"collectionReference": "$.data"
-					}
-				},
-				"inputs": [
+					"method": "GET",
+					"url": "@concat(   'https://understandably-unstraying-kamron.ngrok-free.dev',   pipeline().parameters.endpoint,   '?page=1&page_size=1' )"
+				}
+			},
+			{
+				"name": "Set total_pages",
+				"type": "SetVariable",
+				"dependsOn": [
 					{
-						"referenceName": "ds_RestResource",
-						"type": "DatasetReference",
-						"parameters": {
-							"relativeUrl": {
-								"value": "@concat(\n  pipeline().parameters.endpoint,\n  '?page=',\n  pipeline().parameters.page,\n  '&page_size=',\n  pipeline().parameters.page_size\n)",
-								"type": "Expression"
-							}
-						}
+						"activity": "Get total pages",
+						"dependencyConditions": [
+							"Succeeded"
+						]
 					}
 				],
-				"outputs": [
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "total_pages",
+					"value": "@activity('Get_Total_Pages').output.pagination.total_pages\n"
+				}
+			},
+			{
+				"name": "Until",
+				"type": "Until",
+				"dependsOn": [
 					{
-						"referenceName": "ls_Parquet",
-						"type": "DatasetReference",
-						"parameters": {
-							"folderpath": "@concat(   'raw/',   pipeline().parameters.table_name,   '/ingest_date=',   formatDateTime(utcNow(),'yyyy-MM-dd') )"
-						}
+						"activity": "Set total_pages",
+						"dependencyConditions": [
+							"Succeeded"
+						]
 					}
-				]
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(variables('page'), variables('total_pages'))\n",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Set variable1",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Copy data1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "page",
+								"value": "@add(variables('page'), 1)\n"
+							}
+						},
+						{
+							"name": "Copy data1",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "$['pagination']['page']"
+											},
+											"sink": {
+												"name": "page"
+											}
+										},
+										{
+											"source": {
+												"path": "$['pagination']['page_size']"
+											},
+											"sink": {
+												"name": "page_size"
+											}
+										},
+										{
+											"source": {
+												"path": "$['pagination']['total_pages']"
+											},
+											"sink": {
+												"name": "total_pages"
+											}
+										},
+										{
+											"source": {
+												"path": "$['pagination']['total_records']"
+											},
+											"sink": {
+												"name": "total_records"
+											}
+										},
+										{
+											"source": {
+												"path": "['customer_id']"
+											},
+											"sink": {
+												"name": "customer_id"
+											}
+										},
+										{
+											"source": {
+												"path": "['first_name']"
+											},
+											"sink": {
+												"name": "first_name"
+											}
+										},
+										{
+											"source": {
+												"path": "['last_name']"
+											},
+											"sink": {
+												"name": "last_name"
+											}
+										},
+										{
+											"source": {
+												"path": "['email']"
+											},
+											"sink": {
+												"name": "email"
+											}
+										},
+										{
+											"source": {
+												"path": "['phone']"
+											},
+											"sink": {
+												"name": "phone"
+											}
+										},
+										{
+											"source": {
+												"path": "['city']"
+											},
+											"sink": {
+												"name": "city"
+											}
+										},
+										{
+											"source": {
+												"path": "['state']"
+											},
+											"sink": {
+												"name": "state"
+											}
+										},
+										{
+											"source": {
+												"path": "['created_at']"
+											},
+											"sink": {
+												"name": "created_at"
+											}
+										}
+									],
+									"collectionReference": "$.data"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_RestResource",
+									"type": "DatasetReference",
+									"parameters": {
+										"relativeUrl": "@concat(   pipeline().parameters.endpoint,   '?page=',   pipeline().parameters.page,   '&page_size=',   pipeline().parameters.page_size )"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ls_Parquet",
+									"type": "DatasetReference",
+									"parameters": {
+										"folderpath": "@concat(   'raw/',   pipeline().parameters.table_name,   '/ingest_date=',   formatDateTime(utcNow(),'yyyy-MM-dd') )"
+									}
+								}
+							]
+						}
+					],
+					"timeout": "0.12:00:00"
+				}
 			}
 		],
 		"parameters": {
-			"page": {
-				"type": "string",
-				"defaultValue": "1"
-			},
-			"page_size": {
-				"type": "string",
-				"defaultValue": "1"
-			},
 			"table_name": {
-				"type": "string",
-				"defaultValue": "customers"
+				"type": "string"
 			},
 			"endpoint": {
-				"type": "string",
-				"defaultValue": "/customers"
+				"type": "string"
+			},
+			"page_size": {
+				"type": "int"
+			}
+		},
+		"variables": {
+			"total_pages": {
+				"type": "Integer",
+				"defaultValue": 1
+			},
+			"page": {
+				"type": "Integer",
+				"defaultValue": 1
 			}
 		},
 		"annotations": []
