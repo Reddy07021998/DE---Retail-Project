@@ -12,6 +12,9 @@
 		},
 		"annotations": [],
 		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": "@dataset().tableName"
+		},
 		"schema": []
 	}
 }
