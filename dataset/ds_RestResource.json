@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"Relative URL": {
+			"endpoint": {
 				"type": "string"
 			}
 		},
