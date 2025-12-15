@@ -1,0 +1,140 @@
+{
+	"name": "PL_REST_TO_RAW_PAGED",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get_Pagination_Info",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": "@concat(   'https://understandably-unstraying-kamron.ngrok-free.dev',   pipeline().parameters.endpoint,   '?page=',   pipeline().parameters.page,   '&page_size=1' )"
+				}
+			},
+			{
+				"name": "Copy_REST_To_RAW",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Get_Pagination_Info",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "RestSource",
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_RestResource",
+						"type": "DatasetReference",
+						"parameters": {
+							"relativeUrl": "@concat(   pipeline().parameters.endpoint,   '?page=',   pipeline().parameters.page,   '&page_size=',   pipeline().parameters.page_size )"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ls_Parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"folderpath": "@concat(   'raw/',   pipeline().parameters.table_name,   '/ingest_date=',   formatDateTime(utcNow(),'yyyy-MM-dd') )"
+						}
+					}
+				]
+			},
+			{
+				"name": "Check_More_Pages",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Copy_REST_To_RAW",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@less(\n  pipeline().parameters.page,\n  activity('Get_Pagination_Info').output.pagination.total_pages\n)\n",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Call_Next_Page",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"page": {
+				"type": "int",
+				"defaultValue": 1
+			},
+			"page_sice": {
+				"type": "int",
+				"defaultValue": 1
+			},
+			"table_name": {
+				"type": "string",
+				"defaultValue": "customers"
+			},
+			"endpoint": {
+				"type": "string",
+				"defaultValue": "/customers"
+			}
+		},
+		"variables": {
+			"Set_Page_One": {
+				"type": "String"
+			},
+			"Set_Total_Pages": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}
